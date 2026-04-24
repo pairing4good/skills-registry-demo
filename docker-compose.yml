@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  jfrog:
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss:latest
+    container_name: skills-artifactory
+    ports:
+      - "8082:8082"
+    volumes:
+      - artifactory-data:/var/opt/jfrog/artifactory
+    environment:
+      - JF_SHARED_DATABASE_TYPE=derby
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/artifactory/api/v1/system/ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    networks:
+      - skills-net
+
+  bootstrap:
+    image: curlimages/curl:latest
+    container_name: skills-bootstrap
+    depends_on:
+      jfrog:
+        condition: service_healthy
+    volumes:
+      - ./docker/jfrog/bootstrap.sh:/bootstrap.sh:ro
+      - ./skills/text-summarizer/SKILL.md:/skills/text-summarizer/SKILL.md:ro
+    environment:
+      - ARTIFACTORY_URL=http://jfrog:8082
+      - ARTIFACTORY_USER=${ARTIFACTORY_USER:-admin}
+      - ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD:-password}
+    entrypoint: ["sh", "/bootstrap.sh"]
+    networks:
+      - skills-net
+    restart: "no"
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: docker/mcp-server/Dockerfile
+    container_name: skills-mcp-server
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - "3000:3000"
+    environment:
+      - ARTIFACTORY_URL=http://jfrog:8082
+      - ARTIFACTORY_USER=${ARTIFACTORY_USER:-admin}
+      - ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD:-password}
+      - ARTIFACTORY_REPO=skills-registry
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - skills-net
+
+volumes:
+  artifactory-data:
+
+networks:
+  skills-net:
+    driver: bridge
