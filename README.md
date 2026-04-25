@@ -69,11 +69,8 @@ The infrastructure is intentionally straightforward. JFrog Artifactory is alread
 ```
 skills-registry-demo/
 ├── docker/
-│   ├── jfrog/              # Artifactory container + bootstrap script
+│   ├── jfrog/              # Artifactory container, bootstrap script, and seed skills
 │   └── mcp-server/         # MCP server container
-├── skills/
-│   └── text-summarizer/    # Pre-seeded example skill
-│       └── SKILL.md
 ├── docs/                   # Step-by-step tutorial
 ├── docker-compose.yml      # Brings up all containers together
 └── README.md

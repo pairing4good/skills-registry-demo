@@ -27,7 +27,7 @@ services:
         condition: service_healthy
     volumes:
       - ./docker/jfrog/bootstrap.sh:/bootstrap.sh:ro
-      - ./skills/text-summarizer/SKILL.md:/skills/text-summarizer/SKILL.md:ro
+      - ./docker/jfrog/skills/text-summarizer/SKILL.md:/skills/text-summarizer/SKILL.md:ro
     environment:
       - ARTIFACTORY_URL=http://jfrog:8082
       - ARTIFACTORY_USER=${ARTIFACTORY_USER:-admin}

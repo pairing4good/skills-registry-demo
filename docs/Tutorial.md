@@ -272,7 +272,7 @@ Both skills are now registered and discoverable by any agent connected to the MC
 | JFrog Artifactory | `docker-compose.yml` → `jfrog` service | Versioned artifact storage for skills |
 | Bootstrap script | `docker/jfrog/bootstrap.sh` | Seeds the registry with the first skill on startup |
 | MCP server | `mcp-server/` | Exposes `list_skills`, `get_skill`, `search_skills` to any MCP-compatible agent |
-| Pre-seeded skill | `skills/text-summarizer/SKILL.md` | Exists before the tutorial begins |
+| Pre-seeded skill | `docker/jfrog/skills/text-summarizer/SKILL.md` | Loaded into Artifactory on first `docker compose up` |
 | Skill creator | Installed via `/plugin install example-skills@anthropic-agent-skills` | Official Anthropic skill-creator from [`anthropics/skills`](https://github.com/anthropics/skills) |
 
 ---
