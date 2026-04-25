@@ -17,7 +17,7 @@ Nothing in Artifactory prevents a JAR, a PDF, or any other file from being publi
 This means **the integrity of your skills registry is entirely a governance problem, not a technical one.** The two controls that actually enforce it are:
 
 - **Artifactory permission targets** — restrict write access to `skills-registry` to only the CI pipelines and individuals authorised to publish skills. This is the most important control. If the wrong artifacts can be published, no amount of MCP-layer filtering makes the registry trustworthy.
-- **Path and filename convention** — the MCP server only surfaces files named `skill.md` at exactly `/{name}/{version}/skill.md`. Anything published outside that structure is invisible to agents, though it remains in storage.
+- **Path and filename convention** — `skill.md` acts as the discovery anchor. The MCP server scans for files at `/{name}/{version}/skill.md` to determine that a skill exists. However, when an agent calls `skills_get`, the server fetches and returns **every file** in that version directory — not just `skill.md`. A skill bundle can therefore contain multiple files (`skill.md`, `examples.md`, `schema.json`, etc.) and the agent receives all of them. Anything published outside the `/{name}/{version}/` structure is invisible to agents, though it remains in storage.
 
 Treat the `skills-registry` repository the same way you would treat a production package feed: controlled writes, reviewed submissions, and a clear owner responsible for what is in it.
 
