@@ -80,6 +80,7 @@ Verify everything is healthy:
 ```bash
 curl http://localhost:3000/health
 # Expected: {"status":"ok","artifactory":"connected"}
+
 ```
 
 You can also browse the Artifactory UI at [http://localhost:8082](http://localhost:8082) (login: `admin` / `password`).

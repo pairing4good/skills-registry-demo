@@ -181,7 +181,7 @@ async function fetchAllSkills(): Promise<SkillEntry[]> {
 }
 
 export async function checkHealth(): Promise<void> {
-  await apiFetch('/artifactory/api/v1/system/ping');
+  await apiFetch('/artifactory/api/system/ping');
 }
 
 export async function listSkills(limit = 20, offset = 0): Promise<PaginatedResult<SkillEntry>> {

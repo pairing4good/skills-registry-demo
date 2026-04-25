@@ -8,6 +8,19 @@ That reach matters for governance. Most large enterprises already have Artifacto
 
 The underlying principle is the same whether the artifact is a container image or a skill bundle: versioned, owned, reviewed before deployment, and traceable after the fact. A skills registry built on Artifactory gives an organization the same answers for AI agent behavior that it already has for software: what is deployed, who approved it, and when did it change.
 
+### Important: Artifactory has no concept of a "skill"
+
+This is a critical point that is easy to miss. Artifactory does not know what a skill is. The `skills-registry` repository used in this project is simply a **generic repository** — the same type Artifactory uses to store any arbitrary file. The name `skills-registry` is a convention chosen by your team, not a special repository type or a feature Artifactory provides.
+
+Nothing in Artifactory prevents a JAR, a PDF, or any other file from being published into `skills-registry` if a user has write access. The MCP server will silently ignore files that do not match the expected path pattern (`/{name}/{version}/skill.md`), but those files will still exist in the repository.
+
+This means **the integrity of your skills registry is entirely a governance problem, not a technical one.** The two controls that actually enforce it are:
+
+- **Artifactory permission targets** — restrict write access to `skills-registry` to only the CI pipelines and individuals authorised to publish skills. This is the most important control. If the wrong artifacts can be published, no amount of MCP-layer filtering makes the registry trustworthy.
+- **Path and filename convention** — the MCP server only surfaces files named `skill.md` at exactly `/{name}/{version}/skill.md`. Anything published outside that structure is invisible to agents, though it remains in storage.
+
+Treat the `skills-registry` repository the same way you would treat a production package feed: controlled writes, reviewed submissions, and a clear owner responsible for what is in it.
+
 ---
 
 ## Why You Need to Build This Yourself

@@ -8,7 +8,7 @@ REPO_KEY="skills-registry"
 
 echo "==> Waiting for Artifactory API..."
 until curl -sf -u "$ARTIF_USER:$ARTIF_PASS" \
-    "$ARTIF_URL/artifactory/api/v1/system/ping" > /dev/null 2>&1; do
+    "$ARTIF_URL/artifactory/api/system/ping" > /dev/null 2>&1; do
   echo "    ...not ready yet, retrying in 5s"
   sleep 5
 done
