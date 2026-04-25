@@ -7,10 +7,7 @@ This tutorial walks through the complete skill lifecycle: start the registry, di
 ## Prerequisites
 
 - **Docker Desktop** with Docker Compose v2+ (`docker compose version`)
-- **Node.js 18+** (`node --version`)
-- **Python 3.9+** (`python3 --version`) — needed for the skill-creator's eval scripts
 - **Claude Code** CLI (`claude --version`)
-- **An Anthropic API key** — get one at [console.anthropic.com](https://console.anthropic.com)
 
 ---
 
@@ -22,13 +19,7 @@ cd skills-registry-demo
 cp .env.example .env
 ```
 
-Open `.env` and set your Anthropic API key:
-
-```
-ANTHROPIC_API_KEY=sk-ant-your-key-here
-```
-
-The other defaults (`admin`/`password` for Artifactory) work as-is for local development.
+The defaults in `.env` (`admin`/`password` for Artifactory) work as-is for local development — no other configuration needed.
 
 ---
 
@@ -133,32 +124,20 @@ If the server shows as disconnected, make sure the containers are running (`dock
 
 ---
 
-## Step 5 — First agent run (partial discovery)
+## Step 5 — First discovery (partial)
 
-Install the agent's dependencies and run it:
+Since Claude Code is already connected to the MCP server, you can query the registry directly — no separate agent or API key needed. Ask Claude:
 
-```bash
-cd agent
-npm install
-node discover-skills.js
-```
+> Search the skills registry for `text-summarizer` and `data-extractor`
 
-The agent asks the MCP server to find two skills: `text-summarizer` and `data-extractor`.
-
-**Expected output:**
+Claude will call `list_skills` and `get_skill` through the `skills-registry` MCP connection and report back:
 
 ```
-Skills Discovery Agent
-======================
-MCP Server: http://localhost:3000
-
-Searching for: text-summarizer, data-extractor
-
 ## text-summarizer ✓ FOUND
 
-- **Version:** 1.0.0
-- **Description:** Condenses long-form text into a concise bulleted list of key points.
-- **Tags:** summarization, nlp, text-processing, productivity
+- Version: 1.0.0
+- Description: Condenses long-form text into a concise bulleted list of key points.
+- Tags: summarization, nlp, text-processing, productivity
 
 ## data-extractor ✗ NOT FOUND
 
@@ -170,12 +149,6 @@ One skill exists. One is missing. Let's build it.
 ---
 
 ## Step 6 — Create the missing skill with `/skill-creator`
-
-Go back to the project root in Claude Code:
-
-```bash
-cd ..   # back to skills-registry-demo root
-```
 
 Invoke the skill creator:
 
@@ -266,33 +239,26 @@ A `201 Created` response confirms the upload. Verify in the Artifactory UI at [h
 
 ---
 
-## Step 12 — Second agent run (full discovery)
+## Step 12 — Second discovery (full)
 
-```bash
-cd agent
-node discover-skills.js
+Ask Claude again:
+
+> Search the skills registry for `text-summarizer` and `data-extractor`
+
+Both skills are now registered:
+
 ```
-
-**Expected output:**
-
-```
-Skills Discovery Agent
-======================
-MCP Server: http://localhost:3000
-
-Searching for: text-summarizer, data-extractor
-
 ## text-summarizer ✓ FOUND
 
-- **Version:** 1.0.0
-- **Description:** Condenses long-form text into a concise bulleted list of key points.
-- **Tags:** summarization, nlp, text-processing, productivity
+- Version: 1.0.0
+- Description: Condenses long-form text into a concise bulleted list of key points.
+- Tags: summarization, nlp, text-processing, productivity
 
 ## data-extractor ✓ FOUND
 
-- **Version:** 1.0.0
-- **Description:** Extracts structured data (names, dates, numbers, URLs) from unstructured text.
-- **Tags:** extraction, nlp, structured-data, parsing
+- Version: 1.0.0
+- Description: Extracts structured data (names, dates, numbers, URLs) from unstructured text.
+- Tags: extraction, nlp, structured-data, parsing
 ```
 
 Both skills are now registered and discoverable by any agent connected to the MCP server.
@@ -307,7 +273,6 @@ Both skills are now registered and discoverable by any agent connected to the MC
 | Bootstrap script | `docker/jfrog/bootstrap.sh` | Seeds the registry with the first skill on startup |
 | MCP server | `mcp-server/` | Exposes `list_skills`, `get_skill`, `search_skills` to any MCP-compatible agent |
 | Pre-seeded skill | `skills/text-summarizer/SKILL.md` | Exists before the tutorial begins |
-| Discovery agent | `agent/discover-skills.js` | Demonstrates agent-driven skill lookup via MCP |
 | Skill creator | Installed via `/plugin install example-skills@anthropic-agent-skills` | Official Anthropic skill-creator from [`anthropics/skills`](https://github.com/anthropics/skills) |
 
 ---

@@ -56,9 +56,9 @@ This project shows the full lifecycle of an enterprise skills registry, from ini
 
 - **An MCP server** that wraps the Artifactory REST API and exposes structured tools agents can call to discover available skills, retrieve their content, and publish new ones — all without agents needing to know anything about the underlying storage.
 
-- **A local agent** that demonstrates the discovery workflow: finding a skill that exists, failing gracefully on one that does not, then finding both after a new skill has been created and published.
+- **MCP-native skill discovery** directly inside Claude Code. Connect Claude Code to the MCP server, then ask Claude to search the registry — it calls `list_skills`, `get_skill`, and `search_skills` in real time.
 
-- **A skill authoring workflow** using the `create-skill` skill, showing how Claude generates a new skill locally, how it gets committed to version control, and how it is published to the registry and immediately becomes available for discovery.
+- **A skill authoring workflow** using the `skill-creator` skill, showing how Claude generates a new skill locally, how it gets committed to version control, and how it is published to the registry and immediately becomes available for discovery.
 
 The infrastructure is intentionally straightforward. JFrog Artifactory is already the artifact repository of choice in many enterprises — for containers, packages, and binaries. This project shows that the same platform, the same access controls, and the same operational workflows can extend naturally to AI agent skills.
 
@@ -72,13 +72,10 @@ skills-registry-demo/
 │   ├── jfrog/              # Artifactory container + bootstrap script
 │   └── mcp-server/         # MCP server container
 ├── skills/
-│   ├── skill-one/          # Pre-seeded example skill
-│   │   └── SKILL.md
-│   └── create-skill/       # Meta-skill for authoring new skills
+│   └── text-summarizer/    # Pre-seeded example skill
 │       └── SKILL.md
-├── agent/                  # Local agent demo scripts
-├── docs/                   # Step-by-step tutorial (coming soon)
-├── docker-compose.yml      # Brings up both containers together
+├── docs/                   # Step-by-step tutorial
+├── docker-compose.yml      # Brings up all containers together
 └── README.md
 ```
 
@@ -87,8 +84,7 @@ skills-registry-demo/
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js 18+ (for the local agent)
-- An Anthropic API key (for the agent and create-skill workflow)
+- Claude Code CLI (`claude --version`)
 
 ---
 
@@ -100,7 +96,7 @@ cd skills-registry-demo
 docker compose up
 ```
 
-This starts the JFrog Artifactory instance with `skill-one` pre-loaded and the MCP server pointed at it. The full tutorial walkthrough — running the agent, creating a skill, publishing it, and confirming discovery — is in [`docs/tutorial.md`](docs/tutorial.md) (coming soon).
+This starts the JFrog Artifactory instance with `text-summarizer` pre-loaded and the MCP server pointed at it. The full tutorial walkthrough — discovering skills, creating a new one, publishing it, and confirming discovery — is in [`docs/Tutorial.md`](docs/Tutorial.md).
 
 ---
 
