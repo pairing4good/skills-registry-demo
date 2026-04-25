@@ -95,7 +95,45 @@ You can also browse the Artifactory UI at [http://localhost:8082](http://localho
 
 ---
 
-## Step 4 — First agent run (partial discovery)
+## Step 4 — Connect Claude Code to the MCP server
+
+The MCP server exposes its tools over HTTP. To make Claude Code aware of it, add an entry to `.claude/settings.local.json` in the project root:
+
+```json
+{
+  "mcpServers": {
+    "skills-registry": {
+      "type": "http",
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
+Create this file at `.claude/settings.local.json` in the project root (the `.claude/` directory already exists). Claude Code picks up project-scoped settings automatically whenever you open the project directory.
+
+> **Project-scoped vs user-scoped:** `.claude/settings.local.json` applies only to this project and is not committed to git — it's the right place for local connection details like `localhost` URLs. If you'd rather configure it once for all your projects, add the same `mcpServers` block to `~/.claude/settings.json` instead.
+
+**Verify the connection** by running the `/mcp` command inside Claude Code:
+
+```
+/mcp
+```
+
+You should see `skills-registry` listed as a connected server, with its available tools:
+
+```
+skills-registry  connected
+  • list_skills
+  • get_skill
+  • search_skills
+```
+
+If the server shows as disconnected, make sure the containers are running (`docker compose ps`) and the health check passes (`curl http://localhost:3000/health`).
+
+---
+
+## Step 5 — First agent run (partial discovery)
 
 Install the agent's dependencies and run it:
 
@@ -131,7 +169,7 @@ One skill exists. One is missing. Let's build it.
 
 ---
 
-## Step 5 — Create the missing skill with `/skill-creator`
+## Step 6 — Create the missing skill with `/skill-creator`
 
 Go back to the project root in Claude Code:
 
@@ -160,7 +198,7 @@ Review the generated `skills/data-extractor/SKILL.md` before proceeding.
 
 ---
 
-## Step 6 — Run evaluations
+## Step 7 — Run evaluations
 
 Once you confirm the test cases look good, the skill-creator runs them and presents results. It spawns two subagents per test — one using the skill, one without — so you can see the difference.
 
@@ -175,7 +213,7 @@ Click through the test cases, leave notes in the feedback boxes, then click **Su
 
 ---
 
-## Step 7 — Improve based on feedback
+## Step 8 — Improve based on feedback
 
 Tell the skill-creator you're done reviewing:
 
@@ -187,7 +225,7 @@ Repeat until you're satisfied.
 
 ---
 
-## Step 8 — Optimize the description for triggering
+## Step 9 — Optimize the description for triggering
 
 After the skill is working well, ask the skill-creator to optimize its description:
 
@@ -201,7 +239,7 @@ The skill-creator will:
 
 ---
 
-## Step 9 — Commit the skill to git
+## Step 10 — Commit the skill to git
 
 ```bash
 git add skills/data-extractor/
@@ -210,7 +248,7 @@ git commit -m "feat(skills): add data-extractor v1.0.0"
 
 ---
 
-## Step 10 — Publish to JFrog
+## Step 11 — Publish to JFrog
 
 Push the skill artifact to the Artifactory registry:
 
@@ -228,7 +266,7 @@ A `201 Created` response confirms the upload. Verify in the Artifactory UI at [h
 
 ---
 
-## Step 11 — Second agent run (full discovery)
+## Step 12 — Second agent run (full discovery)
 
 ```bash
 cd agent
