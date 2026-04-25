@@ -277,6 +277,12 @@ Both skills are now registered and discoverable by any agent connected to the MC
 
 ---
 
+## Taking this to production
+
+See [MCP-Server-Enterprise-Deployment.md](MCP-Server-Enterprise-Deployment.md) for guidance on why this MCP server is architecturally significant right now, and how to secure and deploy it inside an enterprise network.
+
+---
+
 ## Stopping the demo
 
 ```bash

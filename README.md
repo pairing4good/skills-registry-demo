@@ -110,6 +110,12 @@ Organizations that get this right gain compounding returns. Each new skill makes
 
 ---
 
+## Enterprise deployment
+
+This demo runs on `localhost`. For internal deployment — including authentication, TLS, RBAC, audit logging, and secrets management — see [docs/MCP-Server-Enterprise-Deployment.md](docs/MCP-Server-Enterprise-Deployment.md).
+
+---
+
 ## Contributing
 
 Tutorial steps and additional skill examples will be added once the core infrastructure is finalized. If you have questions about the architecture or want to adapt this pattern for your own environment, open an issue.
