@@ -3,6 +3,9 @@ const USER = process.env.ARTIFACTORY_USER ?? 'admin';
 const PASS = process.env.ARTIFACTORY_PASSWORD ?? 'password';
 const REPO = process.env.ARTIFACTORY_REPO ?? 'skills-registry';
 
+const CHARACTER_LIMIT = 25_000;
+const FETCH_TIMEOUT_MS = 10_000;
+
 interface FetchOptions {
   headers?: Record<string, string>;
   method?: string;
@@ -29,6 +32,17 @@ export interface SearchResult {
   versions: string[];
 }
 
+export interface PaginatedResult<T> {
+  total: number;
+  count: number;
+  offset: number;
+  items: T[];
+  has_more: boolean;
+  next_offset?: number;
+  truncated?: boolean;
+  truncation_message?: string;
+}
+
 function authHeader(): string {
   return 'Basic ' + Buffer.from(`${USER}:${PASS}`).toString('base64');
 }
@@ -36,6 +50,7 @@ function authHeader(): string {
 async function apiFetch(path: string, options: FetchOptions = {}): Promise<Response> {
   const url = `${BASE_URL}${path}`;
   const res = await fetch(url, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     ...options,
     headers: {
       Authorization: authHeader(),
@@ -89,6 +104,40 @@ function matchesSemverConstraint(version: string, constraint: string): boolean {
   return version === constraint;
 }
 
+function paginateAndLimit<T>(all: T[], limit: number, offset: number): PaginatedResult<T> {
+  const total = all.length;
+  const page = all.slice(offset, offset + limit);
+  const hasMore = offset + page.length < total;
+
+  const result: PaginatedResult<T> = {
+    total,
+    count: page.length,
+    offset,
+    items: page,
+    has_more: hasMore,
+    ...(hasMore ? { next_offset: offset + page.length } : {}),
+  };
+
+  if (JSON.stringify(result).length > CHARACTER_LIMIT) {
+    const half = Math.max(1, Math.floor(page.length / 2));
+    const truncated = page.slice(0, half);
+    return {
+      total,
+      count: truncated.length,
+      offset,
+      items: truncated,
+      has_more: true,
+      next_offset: offset + truncated.length,
+      truncated: true,
+      truncation_message:
+        `Response truncated from ${page.length} to ${truncated.length} items. ` +
+        `Use the 'offset' parameter to page through results.`,
+    };
+  }
+
+  return result;
+}
+
 async function listVersions(name: string): Promise<string[]> {
   const res = await apiFetch(
     `/artifactory/api/storage/${REPO}/skills/${name}?list&listFolders=1`
@@ -109,11 +158,7 @@ async function fetchFile(name: string, version: string, filePath: string): Promi
   return res.text();
 }
 
-export async function checkHealth(): Promise<void> {
-  await apiFetch('/artifactory/api/v1/system/ping');
-}
-
-export async function listSkills(): Promise<SkillEntry[]> {
+async function fetchAllSkills(): Promise<SkillEntry[]> {
   const res = await apiFetch(
     `/artifactory/api/storage/${REPO}/skills?list&deep=1&listFolders=0`
   );
@@ -133,6 +178,15 @@ export async function listSkills(): Promise<SkillEntry[]> {
   }
 
   return Array.from(skillMap.values());
+}
+
+export async function checkHealth(): Promise<void> {
+  await apiFetch('/artifactory/api/v1/system/ping');
+}
+
+export async function listSkills(limit = 20, offset = 0): Promise<PaginatedResult<SkillEntry>> {
+  const all = await fetchAllSkills();
+  return paginateAndLimit(all, limit, offset);
 }
 
 // Resolves a version constraint to an exact version string.
@@ -184,10 +238,14 @@ export async function getSkill(name: string, version: string): Promise<string> {
   return fetched.join('\n\n');
 }
 
-export async function searchSkills(query: string): Promise<SearchResult[]> {
-  const skills = await listSkills();
+export async function searchSkills(
+  query: string,
+  limit = 20,
+  offset = 0
+): Promise<PaginatedResult<SearchResult>> {
+  const skills = await fetchAllSkills();
   const lowerQuery = query.toLowerCase();
-  const results: SearchResult[] = [];
+  const allResults: SearchResult[] = [];
 
   for (const skill of skills) {
     try {
@@ -207,12 +265,12 @@ export async function searchSkills(query: string): Promise<SearchResult[]> {
 
       const searchTarget = `${skillName} ${description} ${tags.join(' ')}`.toLowerCase();
       if (searchTarget.includes(lowerQuery)) {
-        results.push({ name: skillName, description, tags, versions: skill.versions });
+        allResults.push({ name: skillName, description, tags, versions: skill.versions });
       }
     } catch {
       // Skip skills that can't be fetched
     }
   }
 
-  return results;
+  return paginateAndLimit(allResults, limit, offset);
 }

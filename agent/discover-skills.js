@@ -17,7 +17,7 @@ async function main() {
     mcp_servers: [
       {
         type: 'url',
-        url: `${MCP_SERVER_URL}/sse`,
+        url: `${MCP_SERVER_URL}/mcp`,
         name: 'skills-registry',
       },
     ],
@@ -31,7 +31,7 @@ Be concise and factual.`,
 1. text-summarizer
 2. data-extractor
 
-Use list_skills to see all available skills, then use get_skill to fetch details for any you find.
+Use skills_list to see all available skills, then use skills_get to fetch details for any you find.
 
 For each skill:
 - If FOUND: show its name, version, description, and tags
