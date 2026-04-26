@@ -1,5 +1,9 @@
 # MCP Server — Enterprise Deployment Guide
 
+> **Why the demo uses a mock instead of real Artifactory:** The MCP server relies on Artifactory's file storage listing API to discover skills. That API (`/api/storage?list`) requires an Artifactory Pro license — it is not available in Artifactory OSS. Rather than require a paid license to run the demo locally, this project ships a lightweight mock (`docker/artifactory-mock/`) that implements the same four endpoints with the same URL structure and JSON responses. For production use, point the MCP server at your enterprise Artifactory instance — no code changes required.
+
+---
+
 ## Why Artifactory Is the Right Foundation
 
 JFrog Artifactory is the dominant artifact repository in large enterprises. Thousands of organizations — the majority of the Fortune 100 among them — already use Artifactory to store, version, and govern the software artifacts that run their business: container images, packages, binaries, and build outputs. It is not a niche tool; it is core infrastructure.

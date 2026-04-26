@@ -52,7 +52,7 @@ A governed registry gives organizations a deliberate curation process for extern
 
 This project shows the full lifecycle of an enterprise skills registry, from initial setup through ongoing skill development and discovery:
 
-- **A JFrog Artifactory instance** configured as a generic artifact repository for skills, running in Docker and pre-seeded with one vetted skill so the tutorial has something real to work with from the first command.
+- **A local Artifactory-compatible mock** that implements the four Artifactory REST API endpoints the MCP server needs (ping, storage listing, file download, and file upload). The mock stores skills on disk using the same repository and path namespace as real Artifactory. JFrog Artifactory OSS was the original backend, but the file listing and storage APIs the MCP server depends on require Artifactory Pro — so this project ships a lightweight drop-in that works without a license, starts in seconds, and is a faithful stand-in for local development. In production, point the MCP server at your enterprise Artifactory instance instead.
 
 - **An MCP server** that wraps the Artifactory REST API and exposes structured tools agents can call to discover available skills, retrieve their content, and publish new ones — all without agents needing to know anything about the underlying storage.
 
@@ -69,7 +69,8 @@ The infrastructure is intentionally straightforward. JFrog Artifactory is alread
 ```
 skills-registry-demo/
 ├── docker/
-│   ├── jfrog/              # Artifactory container, bootstrap script, and seed skills
+│   ├── artifactory-mock/   # Lightweight local Artifactory-compatible mock server
+│   ├── jfrog/              # Bootstrap script and seed skills
 │   └── mcp-server/         # MCP server container
 ├── docs/                   # Step-by-step tutorial
 ├── docker-compose.yml      # Brings up all containers together
@@ -93,7 +94,7 @@ cd skills-registry-demo
 docker compose up
 ```
 
-This starts the JFrog Artifactory instance with `text-summarizer` pre-loaded and the MCP server pointed at it. The full tutorial walkthrough — discovering skills, creating a new one, publishing it, and confirming discovery — is in [`docs/Tutorial.md`](docs/Tutorial.md).
+This starts the local Artifactory mock with `text-summarizer` pre-loaded and the MCP server pointed at it. The stack is ready in under 10 seconds. The full tutorial walkthrough — discovering skills, creating a new one, publishing it, and confirming discovery — is in [`docs/Tutorial.md`](docs/Tutorial.md).
 
 ---
 

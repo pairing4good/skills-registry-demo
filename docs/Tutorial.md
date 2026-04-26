@@ -11,15 +11,14 @@ This tutorial walks through the complete skill lifecycle: start the registry, di
 
 ---
 
-## Step 1 — Clone and configure
+## Step 1 — Clone
 
 ```bash
 git clone https://github.com/your-org/skills-registry-demo
 cd skills-registry-demo
-cp .env.example .env
 ```
 
-The defaults in `.env` (`admin`/`password` for Artifactory) work as-is for local development — no other configuration needed.
+No configuration needed — the stack works out of the box with no credentials or environment setup.
 
 ---
 
@@ -63,27 +62,18 @@ This starts three services in order:
 
 | Service | What it does |
 |---------|-------------|
-| `jfrog` | JFrog Artifactory OSS — the skills registry backend |
+| `artifactory-mock` | Lightweight local server that implements the Artifactory REST API endpoints the MCP server needs. JFrog Artifactory OSS was the original backend, but the storage listing APIs it relies on require an Artifactory Pro license. This mock is a faithful stand-in for local development — same URL structure, same JSON responses, no license required. In production, replace with your enterprise Artifactory instance. |
 | `bootstrap` | One-shot script that creates the `skills-registry` repo and uploads `text-summarizer` v1.0.0 |
 | `mcp-server` | Node.js MCP server that exposes skill discovery tools to agents |
 
-**First start takes 2–3 minutes** while Artifactory initializes its embedded database. Subsequent starts are much faster.
-
-Watch progress:
-
-```bash
-docker compose logs -f
-```
+The stack is ready in under 10 seconds.
 
 Verify everything is healthy:
 
 ```bash
 curl http://localhost:3000/health
 # Expected: {"status":"ok","artifactory":"connected"}
-
 ```
-
-You can also browse the Artifactory UI at [http://localhost:8082](http://localhost:8082) (login: `admin` / `password`).
 
 ---
 
@@ -222,21 +212,18 @@ git commit -m "feat(skills): add data-extractor v1.0.0"
 
 ---
 
-## Step 11 — Publish to JFrog
+## Step 11 — Publish to the registry
 
-Push the skill artifact to the Artifactory registry:
+Push the skill artifact to the local registry:
 
 ```bash
-source .env   # load ARTIFACTORY_USER, ARTIFACTORY_PASSWORD, ARTIFACTORY_URL
-
-curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" \
-  -X PUT \
+curl -X PUT \
   -H "Content-Type: text/markdown" \
   -T skills/data-extractor/SKILL.md \
-  "${ARTIFACTORY_URL}/artifactory/skills-registry/skills/data-extractor/1.0.0/skill.md"
+  http://localhost:8082/artifactory/skills-registry/skills/data-extractor/1.0.0/skill.md
 ```
 
-A `201 Created` response confirms the upload. Verify in the Artifactory UI at [http://localhost:8082](http://localhost:8082) under **Artifacts → skills-registry → skills → data-extractor**.
+A `201 Created` response confirms the upload. The mock stores the file at the same path structure as a real Artifactory instance, so the same command works unchanged when you point it at a production Artifactory URL.
 
 ---
 
@@ -270,10 +257,10 @@ Both skills are now registered and discoverable by any agent connected to the MC
 
 | Component | Location | Purpose |
 |-----------|----------|---------|
-| JFrog Artifactory | `docker-compose.yml` → `jfrog` service | Versioned artifact storage for skills |
+| Artifactory mock | `docker/artifactory-mock/` | Implements the Artifactory REST API locally — same paths and responses as the real thing, no Pro license required |
 | Bootstrap script | `docker/jfrog/bootstrap.sh` | Seeds the registry with the first skill on startup |
 | MCP server | `mcp-server/` | Exposes `list_skills`, `get_skill`, `search_skills` to any MCP-compatible agent |
-| Pre-seeded skill | `docker/jfrog/skills/text-summarizer/SKILL.md` | Loaded into Artifactory on first `docker compose up` |
+| Pre-seeded skill | `docker/jfrog/skills/text-summarizer/SKILL.md` | Loaded into the registry on first `docker compose up` |
 | Skill creator | Installed via `/plugin install example-skills@anthropic-agent-skills` | Official Anthropic skill-creator from [`anthropics/skills`](https://github.com/anthropics/skills) |
 
 ---
