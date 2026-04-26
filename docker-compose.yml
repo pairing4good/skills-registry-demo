@@ -1,6 +1,24 @@
 version: "3.8"
 
 services:
+  postgres:
+    image: postgres:16
+    container_name: skills-postgres
+    environment:
+      - POSTGRES_DB=artifactory
+      - POSTGRES_USER=artifactory
+      - POSTGRES_PASSWORD=artifactory
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U artifactory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - skills-net
+
   jfrog:
     image: releases-docker.jfrog.io/jfrog/artifactory-oss:latest
     container_name: skills-artifactory
@@ -8,10 +26,17 @@ services:
       - "8082:8082"
     volumes:
       - artifactory-data:/var/opt/jfrog/artifactory
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      - JF_SHARED_DATABASE_TYPE=derby
+      - JF_SHARED_DATABASE_TYPE=postgresql
+      - JF_SHARED_DATABASE_DRIVER=org.postgresql.Driver
+      - JF_SHARED_DATABASE_URL=jdbc:postgresql://postgres/artifactory
+      - JF_SHARED_DATABASE_USERNAME=artifactory
+      - JF_SHARED_DATABASE_PASSWORD=artifactory
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8082/artifactory/api/v1/system/ping"]
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/artifactory/api/system/ping"]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -54,7 +79,7 @@ services:
       - ARTIFACTORY_REPO=skills-registry
       - PORT=3000
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,6 +89,7 @@ services:
 
 volumes:
   artifactory-data:
+  postgres-data:
 
 networks:
   skills-net:

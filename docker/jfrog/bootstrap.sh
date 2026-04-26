@@ -14,22 +14,24 @@ until curl -sf -u "$ARTIF_USER:$ARTIF_PASS" \
 done
 echo "==> Artifactory is ready."
 
-# Create the skills-registry repository if it doesn't exist
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
-  -u "$ARTIF_USER:$ARTIF_PASS" \
-  "$ARTIF_URL/artifactory/api/repositories/$REPO_KEY")
-
-if [ "$HTTP_CODE" = "404" ]; then
-  echo "==> Creating repository: $REPO_KEY"
-  curl -sf -X PUT \
-    -u "$ARTIF_USER:$ARTIF_PASS" \
-    -H "Content-Type: application/json" \
-    -d "{\"key\":\"$REPO_KEY\",\"rclass\":\"local\",\"packageType\":\"generic\",\"description\":\"Enterprise AI Skills Registry\"}" \
-    "$ARTIF_URL/artifactory/api/repositories/$REPO_KEY"
-  echo ""
-  echo "==> Repository created."
-else
+# Create the skills-registry repository if it doesn't exist.
+# Note: the per-repo REST API (PUT /api/repositories/{key}) requires Artifactory Pro.
+# The system config PATCH endpoint works in OSS and is idempotent.
+REPOS=$(curl -s -u "$ARTIF_USER:$ARTIF_PASS" "$ARTIF_URL/artifactory/api/repositories")
+if echo "$REPOS" | grep -q "\"$REPO_KEY\""; then
   echo "==> Repository $REPO_KEY already exists, skipping."
+else
+  echo "==> Creating repository: $REPO_KEY"
+  curl -sf -X PATCH \
+    -u "$ARTIF_USER:$ARTIF_PASS" \
+    -H "Content-Type: application/yaml" \
+    --data-binary "localRepositories:
+  $REPO_KEY:
+    type: localRepoConfig
+    repoLayoutRef: simple-default
+    description: Enterprise AI Skills Registry" \
+    "$ARTIF_URL/artifactory/api/system/configuration" > /dev/null
+  echo "==> Repository created."
 fi
 
 # Upload text-summarizer skill if not already present
