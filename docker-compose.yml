@@ -1,14 +1,14 @@
 version: "3.8"
 
 services:
-  artifactory-mock:
+  artifactory-emulator:
     build:
-      context: ./docker/artifactory-mock
-    container_name: skills-artifactory-mock
+      context: ./docker/artifactory-emulator
+    container_name: skills-artifactory-emulator
     ports:
       - "8082:8082"
     volumes:
-      - mock-data:/data
+      - emulator-data:/data
     environment:
       - DATA_DIR=/data
       - PORT=8082
@@ -25,13 +25,13 @@ services:
     image: curlimages/curl:latest
     container_name: skills-bootstrap
     depends_on:
-      artifactory-mock:
+      artifactory-emulator:
         condition: service_healthy
     volumes:
       - ./docker/jfrog/bootstrap.sh:/bootstrap.sh:ro
       - ./docker/jfrog/skills/text-summarizer/SKILL.md:/skills/text-summarizer/SKILL.md:ro
     environment:
-      - ARTIFACTORY_URL=http://artifactory-mock:8082
+      - ARTIFACTORY_URL=http://artifactory-emulator:8082
     entrypoint: ["sh", "/bootstrap.sh"]
     networks:
       - skills-net
@@ -48,7 +48,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - ARTIFACTORY_URL=${ARTIFACTORY_URL:-http://artifactory-mock:8082}
+      - ARTIFACTORY_URL=${ARTIFACTORY_URL:-http://artifactory-emulator:8082}
       - PORT=3000
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
@@ -60,7 +60,7 @@ services:
       - skills-net
 
 volumes:
-  mock-data:
+  emulator-data:
 
 networks:
   skills-net:
